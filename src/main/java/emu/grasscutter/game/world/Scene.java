@@ -41,46 +41,78 @@ import emu.grasscutter.server.packet.send.*;
 import emu.grasscutter.server.scheduler.ServerTaskScheduler;
 import emu.grasscutter.utils.algorithms.KahnsSort;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+
 import lombok.*;
 
 public class Scene {
-    @Getter private final World world;
-    @Getter private final SceneData sceneData;
-    @Getter private final List<Player> players;
-    @Getter private final Map<Integer, GameEntity> entities;
-    @Getter private final Map<Integer, GameEntity> weaponEntities;
-    @Getter private final Set<SpawnDataEntry> spawnedEntities;
-    @Getter private final Set<SpawnDataEntry> deadSpawnedEntities;
-    @Getter private final Set<SceneBlock> loadedBlocks;
-    @Getter private final Set<SceneGroup> loadedGroups;
-    @Getter private final BlossomManager blossomManager;
+    @Getter
+    private final World world;
+    @Getter
+    private final SceneData sceneData;
+    @Getter
+    private final List<Player> players;
+    @Getter
+    private final Map<Integer, GameEntity> entities;
+    @Getter
+    private final Map<Integer, GameEntity> weaponEntities;
+    @Getter
+    private final Set<SpawnDataEntry> spawnedEntities;
+    @Getter
+    private final Set<SpawnDataEntry> deadSpawnedEntities;
+    @Getter
+    private final Set<SceneBlock> loadedBlocks;
+    @Getter
+    private final Set<SceneGroup> loadedGroups;
+    @Getter
+    private final BlossomManager blossomManager;
     private final HashSet<Integer> unlockedForces;
     private final long startWorldTime;
-    @Getter @Setter DungeonManager dungeonManager;
-    @Getter Int2ObjectMap<Route> sceneRoutes;
+    @Getter
+    @Setter
+    DungeonManager dungeonManager;
+    @Getter
+    Int2ObjectMap<Route> sceneRoutes;
     private Set<SpawnDataEntry.GridBlockId> loadedGridBlocks;
-    @Getter @Setter private boolean dontDestroyWhenEmpty;
-    @Getter private final SceneScriptManager scriptManager;
-    @Getter @Setter private WorldChallenge challenge;
-    @Getter private List<DungeonSettleListener> dungeonSettleListeners;
-    @Getter @Setter private int prevScene; // Id of the previous scene
-    @Getter @Setter private int prevScenePoint;
-    @Getter @Setter private int killedMonsterCount;
+    @Getter
+    @Setter
+    private boolean dontDestroyWhenEmpty;
+    @Getter
+    private final SceneScriptManager scriptManager;
+    @Getter
+    @Setter
+    private WorldChallenge challenge;
+    @Getter
+    private List<DungeonSettleListener> dungeonSettleListeners;
+    @Getter
+    @Setter
+    private int prevScene; // Id of the previous scene
+    @Getter
+    @Setter
+    private int prevScenePoint;
+    @Getter
+    @Setter
+    private int killedMonsterCount;
     private Set<SceneNpcBornEntry> npcBornEntrySet;
-    @Getter private boolean finishedLoading = false;
-    @Getter protected int tickCount = 0;
-    @Getter private boolean isPaused = false;
+    @Getter
+    private boolean finishedLoading = false;
+    @Getter
+    protected int tickCount = 0;
+    @Getter
+    private boolean isPaused = false;
 
     private final List<Runnable> afterLoadedCallbacks = new ArrayList<>();
     private final List<Runnable> afterHostInitCallbacks = new ArrayList<>();
 
-    @Getter private GameEntity sceneEntity;
-    @Getter private final ServerTaskScheduler scheduler;
+    @Getter
+    private GameEntity sceneEntity;
+    @Getter
+    private final ServerTaskScheduler scheduler;
 
     public Scene(World world, SceneData sceneData) {
         this.world = world;
@@ -132,7 +164,7 @@ public class Scene {
         else if (id == this.getWorld().getLevelEntityId()) return this.getWorld().getEntity();
 
         var teamEntityPlayer =
-                players.stream().filter(p -> p.getTeamManager().getEntity().getId() == id).findAny();
+            players.stream().filter(p -> p.getTeamManager().getEntity().getId() == id).findAny();
         if (teamEntityPlayer.isPresent()) return teamEntityPlayer.get().getTeamManager().getEntity();
 
         // Check for an avatar.
@@ -160,19 +192,20 @@ public class Scene {
 
     public GameEntity getFirstEntityByConfigId(int configId) {
         return this.entities.values().stream()
-                .filter(x -> x.getConfigId() == configId)
-                .findFirst()
-                .orElse(null);
+            .filter(x -> x.getConfigId() == configId)
+            .findFirst()
+            .orElse(null);
     }
 
     public GameEntity getEntityByConfigId(int configId, int groupId) {
         return this.entities.values().stream()
-                .filter(x -> x.getConfigId() == configId && x.getGroupId() == groupId)
-                .findFirst()
-                .orElse(null);
+            .filter(x -> x.getConfigId() == configId && x.getGroupId() == groupId)
+            .findFirst()
+            .orElse(null);
     }
 
-    @Nullable public Route getSceneRouteById(int routeId) {
+    @Nullable
+    public Route getSceneRouteById(int routeId) {
         return sceneRoutes.get(routeId);
     }
 
@@ -218,7 +251,7 @@ public class Scene {
      * Triggers an event in the dungeon manager.
      *
      * @param conditionType The condition type to trigger.
-     * @param params The parameters to pass to the event.
+     * @param params        The parameters to pass to the event.
      */
     public void triggerDungeonEvent(DungeonPassConditionType conditionType, int... params) {
         if (this.dungeonManager == null) return;
@@ -268,10 +301,10 @@ public class Scene {
 
         // Remove player widget gadgets
         this.getEntities().values().stream()
-                .filter(gameEntity -> gameEntity instanceof EntityVehicle)
-                .map(gameEntity -> (EntityVehicle) gameEntity)
-                .filter(entityVehicle -> entityVehicle.getOwner().equals(player))
-                .forEach(entityVehicle -> this.removeEntity(entityVehicle, VisionType.VISION_TYPE_REMOVE));
+            .filter(gameEntity -> gameEntity instanceof EntityVehicle)
+            .map(gameEntity -> (EntityVehicle) gameEntity)
+            .filter(entityVehicle -> entityVehicle.getOwner().equals(player))
+            .forEach(entityVehicle -> this.removeEntity(entityVehicle, VisionType.VISION_TYPE_REMOVE));
 
         // Deregister scene if not in use
         if (this.getPlayerCount() <= 0 && !this.dontDestroyWhenEmpty) {
@@ -297,22 +330,22 @@ public class Scene {
                 if (avatar == null) continue;
             }
             player
-                    .getTeamManager()
-                    .getActiveTeam()
-                    .add(
-                            EntityCreationEvent.call(
-                                    EntityAvatar.class,
-                                    new Class<?>[] {Scene.class, Avatar.class},
-                                    new Object[] {player.getScene(), avatar}));
+                .getTeamManager()
+                .getActiveTeam()
+                .add(
+                    EntityCreationEvent.call(
+                        EntityAvatar.class,
+                        new Class<?>[]{Scene.class, Avatar.class},
+                        new Object[]{player.getScene(), avatar}));
         }
 
         // Limit character index in case its out of bounds
         if (player.getTeamManager().getCurrentCharacterIndex()
-                        >= player.getTeamManager().getActiveTeam().size()
-                || player.getTeamManager().getCurrentCharacterIndex() < 0) {
+            >= player.getTeamManager().getActiveTeam().size()
+            || player.getTeamManager().getCurrentCharacterIndex() < 0) {
             player
-                    .getTeamManager()
-                    .setCurrentCharacterIndex(player.getTeamManager().getCurrentCharacterIndex() - 1);
+                .getTeamManager()
+                .setCurrentCharacterIndex(player.getTeamManager().getCurrentCharacterIndex() - 1);
         }
     }
 
@@ -331,7 +364,7 @@ public class Scene {
         }
 
         if (teamManager.getCurrentAvatarEntity().getFightProperty(FightProperty.FIGHT_PROP_CUR_HP)
-                <= 0f) {
+            <= 0f) {
             teamManager.getCurrentAvatarEntity().setFightProperty(FightProperty.FIGHT_PROP_CUR_HP, 1f);
         }
 
@@ -339,8 +372,8 @@ public class Scene {
 
         // Notify the client of any extra skill charges
         teamManager.getActiveTeam().stream()
-                .map(EntityAvatar::getAvatar)
-                .forEach(Avatar::sendSkillExtraChargeMap);
+            .map(EntityAvatar::getAvatar)
+            .forEach(Avatar::sendSkillExtraChargeMap);
     }
 
     private void addEntityDirectly(GameEntity entity) {
@@ -372,13 +405,13 @@ public class Scene {
             }
         } else {
             EntityItem entity =
-                    new EntityItem(
-                            this,
-                            player,
-                            itemData,
-                            bornForm.getPosition().clone().addY(0.5f),
-                            item.getCount(),
-                            share);
+                new EntityItem(
+                    this,
+                    player,
+                    itemData,
+                    bornForm.getPosition().clone().addY(0.5f),
+                    item.getCount(),
+                    share);
             addEntity(entity);
         }
     }
@@ -405,7 +438,7 @@ public class Scene {
     }
 
     public synchronized void addEntities(
-            Collection<? extends GameEntity> entities, VisionType visionType) {
+        Collection<? extends GameEntity> entities, VisionType visionType) {
         if (entities == null || entities.isEmpty()) {
             return;
         }
@@ -440,11 +473,11 @@ public class Scene {
 
     public void removeEntities(List<GameEntity> entity, VisionType visionType) {
         var toRemove =
-                entity.stream()
-                        .filter(Objects::nonNull)
-                        .map(this::removeEntityDirectly)
-                        .filter(Objects::nonNull)
-                        .toList();
+            entity.stream()
+                .filter(Objects::nonNull)
+                .map(this::removeEntityDirectly)
+                .filter(Objects::nonNull)
+                .toList();
         if (!toRemove.isEmpty()) {
             this.broadcastPacket(new PacketSceneEntityDisappearNotify(toRemove, visionType));
         }
@@ -454,21 +487,21 @@ public class Scene {
         this.removeEntityDirectly(oldEntity);
         this.addEntityDirectly(newEntity);
         this.broadcastPacket(
-                new PacketSceneEntityDisappearNotify(oldEntity, VisionType.VISION_TYPE_REPLACE));
+            new PacketSceneEntityDisappearNotify(oldEntity, VisionType.VISION_TYPE_REPLACE));
         this.broadcastPacket(
-                new PacketSceneEntityAppearNotify(
-                        newEntity, VisionType.VISION_TYPE_REPLACE, oldEntity.getId()));
+            new PacketSceneEntityAppearNotify(
+                newEntity, VisionType.VISION_TYPE_REPLACE, oldEntity.getId()));
     }
 
     public void showOtherEntities(Player player) {
         GameEntity currentEntity = player.getTeamManager().getCurrentAvatarEntity();
         List<GameEntity> entities =
-                this.getEntities().values().stream()
-                        .filter(entity -> entity != currentEntity)
-                        .filter(
-                                gameEntity ->
-                                        !(gameEntity instanceof Rebornable rebornable) || !rebornable.isInCD())
-                        .toList();
+            this.getEntities().values().stream()
+                .filter(entity -> entity != currentEntity)
+                .filter(
+                    gameEntity ->
+                        !(gameEntity instanceof Rebornable rebornable) || !rebornable.isInCD())
+                .toList();
 
         player.sendPacket(new PacketSceneEntityAppearNotify(entities, VisionType.VISION_TYPE_MEET));
     }
@@ -510,15 +543,15 @@ public class Scene {
                 var clientGadgetOwner = getEntityById(gadgetAttacker.getOwnerEntityId());
                 if (clientGadgetOwner instanceof EntityAvatar) {
                     ((EntityClientGadget) attacker)
-                            .getOwner()
-                            .getCodex()
-                            .checkAnimal(target, CodexAnimalData.CountType.CODEX_COUNT_TYPE_KILL);
+                        .getOwner()
+                        .getCodex()
+                        .checkAnimal(target, CodexAnimalData.CountType.CODEX_COUNT_TYPE_KILL);
                 }
             } else if (attacker instanceof EntityAvatar avatarAttacker) {
                 avatarAttacker
-                        .getPlayer()
-                        .getCodex()
-                        .checkAnimal(target, CodexAnimalData.CountType.CODEX_COUNT_TYPE_KILL);
+                    .getPlayer()
+                    .getCodex()
+                    .checkAnimal(target, CodexAnimalData.CountType.CODEX_COUNT_TYPE_KILL);
             }
         }
 
@@ -529,12 +562,12 @@ public class Scene {
         var world = this.getWorld();
         if (target instanceof EntityMonster monster && this.getSceneType() != SceneType.SCENE_DUNGEON) {
             if (monster.getMetaMonster() != null
-                    && !world.getServer().getDropSystem().handleMonsterDrop(monster)) {
+                && !world.getServer().getDropSystem().handleMonsterDrop(monster)) {
                 Grasscutter.getLogger()
-                        .debug(
-                                "Can not solve monster drop: drop_id = {}, drop_tag = {}. Falling back to legacy drop system.",
-                                monster.getMetaMonster().drop_id,
-                                monster.getMetaMonster().drop_tag);
+                    .debug(
+                        "Can not solve monster drop: drop_id = {}, drop_tag = {}. Falling back to legacy drop system.",
+                        monster.getMetaMonster().drop_id,
+                        monster.getMetaMonster().drop_tag);
                 world.getServer().getDropSystemLegacy().callDrop(monster);
             }
         }
@@ -542,10 +575,10 @@ public class Scene {
         if (target instanceof EntityGadget gadget) {
             if (gadget.getMetaGadget() != null) {
                 world
-                        .getServer()
-                        .getDropSystem()
-                        .handleChestDrop(
-                                gadget.getMetaGadget().drop_id, gadget.getMetaGadget().drop_count, gadget);
+                    .getServer()
+                    .getDropSystem()
+                    .handleChestDrop(
+                        gadget.getMetaGadget().drop_id, gadget.getMetaGadget().drop_count, gadget);
             }
         }
 
@@ -555,30 +588,33 @@ public class Scene {
         // Death event
         target.onDeath(attackerId);
         this.triggerDungeonEvent(
-                DungeonPassConditionType.DUNGEON_COND_KILL_MONSTER_COUNT, ++killedMonsterCount);
+            DungeonPassConditionType.DUNGEON_COND_KILL_MONSTER_COUNT, ++killedMonsterCount);
     }
 
     public void onTick() {
         // Disable ticking for the player's home world.
         if (this.getSceneType() == SceneType.SCENE_HOME_WORLD
-                || this.getSceneType() == SceneType.SCENE_HOME_ROOM) {
+            || this.getSceneType() == SceneType.SCENE_HOME_ROOM) {
             this.finishLoading();
             return;
         }
 
         if (!isPaused) {
+            //没暂停 执行定时任务
             this.getScheduler().runTasks();
         }
 
+        //脚本管理器已经初始化了
         if (this.getScriptManager().isInit()) {
             // this.checkBlocks();
+            // 检测组 感觉是根据场景内的玩家 进行分组 整个大地图 局部加载 这个方法是进行整理
             this.checkGroups();
         } else {
-            // TEMPORARY
+            // TEMPORARY 检测生成和移除 刷怪
             this.checkSpawns();
         }
 
-        // Triggers
+        // Triggers 检测区域 进入/离开 Region
         this.scriptManager.checkRegions();
 
         if (challenge != null) {
@@ -589,11 +625,11 @@ public class Scene {
 
         var entities = Map.copyOf(this.getEntities());
         entities.forEach(
-                (eid, e) -> {
-                    if (!e.isAlive()) {
-                        this.getEntities().remove(eid);
-                    } else e.onTick(sceneTime);
-                });
+            (eid, e) -> {
+                if (!e.isAlive()) {
+                    this.getEntities().remove(eid);
+                } else e.onTick(sceneTime);
+            });
 
         blossomManager.onTick();
 
@@ -611,31 +647,33 @@ public class Scene {
         if (this.tickCount++ % 10 == 0) this.broadcastPacket(new PacketSceneTimeNotify(this));
     }
 
-    /** Validates a player's current position. Teleports the player if the player is out of bounds. */
+    /**
+     * Validates a player's current position. Teleports the player if the player is out of bounds.
+     */
     protected void checkPlayerRespawn() {
         if (this.getScriptManager().getConfig() == null) return;
         var diePos = this.getScriptManager().getConfig().die_y;
 
         // Check players in the scene.
         this.players.forEach(
-                player -> {
-                    if (this.getScriptManager().getConfig() == null) return;
+            player -> {
+                if (this.getScriptManager().getConfig() == null) return;
 
-                    // Check if we need a respawn
-                    if (diePos >= player.getPosition().getY()) {
-                        // Respawn the player.
-                        this.respawnPlayer(player);
-                    }
-                });
+                // Check if we need a respawn
+                if (diePos >= player.getPosition().getY()) {
+                    // Respawn the player.
+                    this.respawnPlayer(player);
+                }
+            });
 
         // Check entities in the scene.
         this.getEntities()
-                .forEach(
-                        (id, entity) -> {
-                            if (diePos >= entity.getPosition().getY()) {
-                                this.killEntity(entity);
-                            }
-                        });
+            .forEach(
+                (id, entity) -> {
+                    if (diePos >= entity.getPosition().getY()) {
+                        this.killEntity(entity);
+                    }
+                });
     }
 
     /**
@@ -674,7 +712,7 @@ public class Scene {
      */
     private Position getRespawnRotation(Player player) {
         var lastCheckpointRot =
-                this.dungeonManager != null ? this.dungeonManager.getRespawnRotation() : null;
+            this.dungeonManager != null ? this.dungeonManager.getRespawnRotation() : null;
         return lastCheckpointRot != null ? lastCheckpointRot : this.getDefaultRotation(player);
     }
 
@@ -692,14 +730,14 @@ public class Scene {
         var targetPos = getRespawnLocation(player);
         var targetRot = getRespawnRotation(player);
         var teleportProps =
-                TeleportProperties.builder()
-                        .sceneId(getId())
-                        .teleportTo(targetPos)
-                        .teleportRot(targetRot)
-                        .teleportType(PlayerTeleportEvent.TeleportType.INTERNAL)
-                        .enterType(EnterTypeOuterClass.EnterType.ENTER_TYPE_GOTO)
-                        .enterReason(
-                                dungeonManager != null ? EnterReason.DungeonReviveOnWaypoint : EnterReason.Revival);
+            TeleportProperties.builder()
+                .sceneId(getId())
+                .teleportTo(targetPos)
+                .teleportRot(targetRot)
+                .teleportType(PlayerTeleportEvent.TeleportType.INTERNAL)
+                .enterType(EnterTypeOuterClass.EnterType.ENTER_TYPE_GOTO)
+                .enterReason(
+                    dungeonManager != null ? EnterReason.DungeonReviveOnWaypoint : EnterReason.Revival);
 
         return this.getWorld().transferPlayerToScene(player, teleportProps.build());
     }
@@ -793,12 +831,12 @@ public class Scene {
         Set<SpawnDataEntry.GridBlockId> loadedGridBlocks = new HashSet<>();
         for (Player player : this.getPlayers()) {
             Collections.addAll(
-                    loadedGridBlocks,
-                    SpawnDataEntry.GridBlockId.getAdjacentGridBlockIds(
-                            player.getSceneId(), player.getPosition()));
+                loadedGridBlocks,
+                SpawnDataEntry.GridBlockId.getAdjacentGridBlockIds(
+                    player.getSceneId(), player.getPosition()));
         }
         if (this.loadedGridBlocks.containsAll(
-                loadedGridBlocks)) { // Don't recalculate static spawns if nothing has changed
+            loadedGridBlocks)) { // Don't recalculate static spawns if nothing has changed
             return;
         }
         this.loadedGridBlocks = loadedGridBlocks;
@@ -837,7 +875,7 @@ public class Scene {
                     int level = this.getEntityLevel(entry.getLevel(), worldLevelOverride);
 
                     EntityMonster monster =
-                            new EntityMonster(this, data, entry.getPos(), entry.getRot(), level);
+                        new EntityMonster(this, data, entry.getPos(), entry.getRot(), level);
                     monster.setGroupId(entry.getGroup().getGroupId());
                     monster.setPoseId(entry.getPoseId());
                     monster.setConfigId(entry.getConfigId());
@@ -846,7 +884,7 @@ public class Scene {
                     entity = monster;
                 } else if (entry.getGadgetId() > 0) {
                     EntityGadget gadget =
-                            new EntityGadget(this, entry.getGadgetId(), entry.getPos(), entry.getRot());
+                        new EntityGadget(this, entry.getGadgetId(), entry.getPos(), entry.getRot());
                     gadget.setGroupId(entry.getGroup().getGroupId());
                     gadget.setConfigId(entry.getConfigId());
                     gadget.setSpawnEntry(entry);
@@ -875,8 +913,8 @@ public class Scene {
         for (GameEntity entity : this.getEntities().values()) {
             var spawnEntry = entity.getSpawnEntry();
             if (spawnEntry != null
-                    && !(entity instanceof EntityWeapon)
-                    && !visible.contains(spawnEntry)) {
+                && !(entity instanceof EntityWeapon)
+                && !visible.contains(spawnEntry)) {
                 toRemove.add(entity);
                 spawnedEntities.remove(spawnEntry);
             }
@@ -890,7 +928,7 @@ public class Scene {
         if (toRemove.size() > 0) {
             toRemove.forEach(this::removeEntityDirectly);
             this.broadcastPacket(
-                    new PacketSceneEntityDisappearNotify(toRemove, VisionType.VISION_TYPE_REMOVE));
+                new PacketSceneEntityDisappearNotify(toRemove, VisionType.VISION_TYPE_REMOVE));
             blossomManager.recycleGadgetEntity(toRemove);
         }
     }
@@ -898,9 +936,9 @@ public class Scene {
     public List<SceneBlock> getPlayerActiveBlocks(Player player) {
         // consider the borders' entities of blocks, so we check if contains by index
         return SceneIndexManager.queryNeighbors(
-                getScriptManager().getBlocksIndex(),
-                player.getPosition().toXZDoubleArray(),
-                Grasscutter.getConfig().server.game.loadEntitiesForPlayerRange);
+            getScriptManager().getBlocksIndex(),
+            player.getPosition().toXZDoubleArray(),
+            Grasscutter.getConfig().server.game.loadEntitiesForPlayerRange);
     }
 
     public Set<Integer> getPlayerActiveGroups(Player player) {
@@ -926,10 +964,10 @@ public class Scene {
 
     public void checkGroups() {
         Set<Integer> visible =
-                this.players.stream()
-                        .map(this::getPlayerActiveGroups)
-                        .flatMap(Collection::stream)
-                        .collect(Collectors.toSet());
+            this.players.stream()
+                .map(this::getPlayerActiveGroups)
+                .flatMap(Collection::stream)
+                .collect(Collectors.toSet());
 
         for (var group : this.loadedGroups) {
             if (!visible.contains(group.id) && !group.dynamic_load && !group.dontUnload)
@@ -937,20 +975,20 @@ public class Scene {
         }
 
         var toLoad =
-                visible.stream()
-                        .filter(g -> this.loadedGroups.stream().noneMatch(gr -> gr.id == g))
-                        .map(
-                                g -> {
-                                    for (var b : scriptManager.getBlocks().values()) {
-                                        loadBlock(b);
-                                        SceneGroup group = b.groups.getOrDefault(g, null);
-                                        if (group != null && !group.dynamic_load) return group;
-                                    }
+            visible.stream()
+                .filter(g -> this.loadedGroups.stream().noneMatch(gr -> gr.id == g))
+                .map(
+                    g -> {
+                        for (var b : scriptManager.getBlocks().values()) {
+                            loadBlock(b);
+                            SceneGroup group = b.groups.getOrDefault(g, null);
+                            if (group != null && !group.dynamic_load) return group;
+                        }
 
-                                    return null;
-                                })
-                        .filter(Objects::nonNull)
-                        .toList();
+                        return null;
+                    })
+                .filter(Objects::nonNull)
+                .toList();
 
         this.onLoadGroup(toLoad);
         if (!toLoad.isEmpty()) this.onRegisterGroups();
@@ -987,74 +1025,74 @@ public class Scene {
     public void onRegisterGroups() {
         var sceneGroups = this.loadedGroups;
         var sceneGroupMap =
-                sceneGroups.stream().collect(Collectors.toMap(item -> item.id, item -> item));
+            sceneGroups.stream().collect(Collectors.toMap(item -> item.id, item -> item));
         var sceneGroupsIds = sceneGroups.stream().map(group -> group.id).toList();
         var dynamicGroups =
-                sceneGroups.stream().filter(group -> group.dynamic_load).map(group -> group.id).toList();
+            sceneGroups.stream().filter(group -> group.dynamic_load).map(group -> group.id).toList();
 
         // Create the graph
         var nodes = new ArrayList<KahnsSort.Node>();
         var groupList = new ArrayList<Integer>();
         GameData.getGroupReplacements().values().stream()
-                .filter(replacement -> dynamicGroups.contains(replacement.id))
-                .forEach(
-                        replacement -> {
-                            Grasscutter.getLogger().debug("Graph ordering replacement {}", replacement);
-                            replacement.replace_groups.forEach(
-                                    group -> {
-                                        nodes.add(new KahnsSort.Node(replacement.id, group));
-                                        if (!groupList.contains(group)) groupList.add(group);
-                                    });
-
-                            if (!groupList.contains(replacement.id)) groupList.add(replacement.id);
+            .filter(replacement -> dynamicGroups.contains(replacement.id))
+            .forEach(
+                replacement -> {
+                    Grasscutter.getLogger().debug("Graph ordering replacement {}", replacement);
+                    replacement.replace_groups.forEach(
+                        group -> {
+                            nodes.add(new KahnsSort.Node(replacement.id, group));
+                            if (!groupList.contains(group)) groupList.add(group);
                         });
+
+                    if (!groupList.contains(replacement.id)) groupList.add(replacement.id);
+                });
 
         KahnsSort.Graph graph = new KahnsSort.Graph(nodes, groupList);
         List<Integer> dynamicGroupsOrdered = KahnsSort.doSort(graph);
 
         // Now we can start unloading and loading groups :D
         dynamicGroupsOrdered.forEach(
-                group -> {
-                    if (GameData.getGroupReplacements().containsKey((int) group)) { // isGroupJoinReplacement
-                        var data = GameData.getGroupReplacements().get((int) group);
-                        var sceneGroupReplacement =
-                                this.loadedGroups.stream().filter(g -> g.id == group).findFirst().orElseThrow();
-                        if (sceneGroupReplacement.is_replaceable != null) {
-                            var it = data.replace_groups.iterator();
-                            while (it.hasNext()) {
-                                var replace_group = it.next();
-                                if (!sceneGroupsIds.contains(replace_group)) continue;
+            group -> {
+                if (GameData.getGroupReplacements().containsKey((int) group)) { // isGroupJoinReplacement
+                    var data = GameData.getGroupReplacements().get((int) group);
+                    var sceneGroupReplacement =
+                        this.loadedGroups.stream().filter(g -> g.id == group).findFirst().orElseThrow();
+                    if (sceneGroupReplacement.is_replaceable != null) {
+                        var it = data.replace_groups.iterator();
+                        while (it.hasNext()) {
+                            var replace_group = it.next();
+                            if (!sceneGroupsIds.contains(replace_group)) continue;
 
-                                // Check if we can replace this group
-                                SceneGroup sceneGroup = sceneGroupMap.get(replace_group);
-                                if (sceneGroup != null
-                                        && sceneGroup.is_replaceable != null
-                                        && ((sceneGroup.is_replaceable.value
-                                                        && sceneGroup.is_replaceable.version
-                                                                <= sceneGroupReplacement.is_replaceable.version)
-                                                || sceneGroup.is_replaceable.new_bin_only)) {
-                                    this.unloadGroup(
-                                            scriptManager.getBlocks().get(sceneGroup.block_id), replace_group);
-                                    it.remove();
-                                    Grasscutter.getLogger().debug("Graph ordering: unloaded {}", replace_group);
-                                }
+                            // Check if we can replace this group
+                            SceneGroup sceneGroup = sceneGroupMap.get(replace_group);
+                            if (sceneGroup != null
+                                && sceneGroup.is_replaceable != null
+                                && ((sceneGroup.is_replaceable.value
+                                && sceneGroup.is_replaceable.version
+                                <= sceneGroupReplacement.is_replaceable.version)
+                                || sceneGroup.is_replaceable.new_bin_only)) {
+                                this.unloadGroup(
+                                    scriptManager.getBlocks().get(sceneGroup.block_id), replace_group);
+                                it.remove();
+                                Grasscutter.getLogger().debug("Graph ordering: unloaded {}", replace_group);
                             }
                         }
                     }
-                });
+                }
+            });
     }
 
     public void loadTriggerFromGroup(SceneGroup group, String triggerName) {
         // Load triggers and regions
         this.getScriptManager()
-                .registerTrigger(
-                        group.triggers.values().stream()
-                                .filter(p -> p.getName().contains(triggerName))
-                                .toList());
+            .registerTrigger(
+                group.triggers.values().stream()
+                    .filter(p -> p.getName().contains(triggerName))
+                    .toList());
         group.regions.values().stream()
-                .filter(q -> q.config_id == Integer.parseInt(triggerName.substring(13)))
-                .map(region -> new EntityRegion(this, region))
-                .forEach(getScriptManager()::registerRegion);
+            .filter(q -> q.config_id == Integer.parseInt(triggerName.substring(13)))
+            .map(region -> new EntityRegion(this, region))
+            .forEach(getScriptManager()::registerRegion);
     }
 
     public void onLoadGroup(List<SceneGroup> groups) {
@@ -1092,28 +1130,28 @@ public class Scene {
             // Load suites
             // int suite = group.findInitSuiteIndex(0);
             this.getScriptManager()
-                    .refreshGroup(groupInstance, 0, false); // This is what the official server does
+                .refreshGroup(groupInstance, 0, false); // This is what the official server does
 
             this.loadedGroups.add(group);
         }
 
         this.scriptManager.meetEntities(entities);
         groups.forEach(
-                g -> scriptManager.callEvent(new ScriptArgs(g.id, EventType.EVENT_GROUP_LOAD, g.id)));
+            g -> scriptManager.callEvent(new ScriptArgs(g.id, EventType.EVENT_GROUP_LOAD, g.id)));
 
         Grasscutter.getLogger().trace("Scene {} loaded {} group(s)", this.getId(), groups.size());
     }
 
     public void unloadGroup(SceneBlock block, int group_id) {
         List<GameEntity> toRemove =
-                this.getEntities().values().stream()
-                        .filter(e -> e != null && (e.getBlockId() == block.id && e.getGroupId() == group_id))
-                        .toList();
+            this.getEntities().values().stream()
+                .filter(e -> e != null && (e.getBlockId() == block.id && e.getGroupId() == group_id))
+                .toList();
 
         if (toRemove.size() > 0) {
             toRemove.forEach(this::removeEntityDirectly);
             this.broadcastPacket(
-                    new PacketSceneEntityDisappearNotify(toRemove, VisionType.VISION_TYPE_REMOVE));
+                new PacketSceneEntityDisappearNotify(toRemove, VisionType.VISION_TYPE_REMOVE));
         }
 
         var group = block.groups.get(group_id);
@@ -1175,8 +1213,8 @@ public class Scene {
         }
 
         this.broadcastPacketToOthers(
-                gadget.getOwner(),
-                new PacketSceneEntityDisappearNotify(gadget, VisionType.VISION_TYPE_DIE));
+            gadget.getOwner(),
+            new PacketSceneEntityDisappearNotify(gadget, VisionType.VISION_TYPE_DIE));
     }
 
     // Broadcasting
@@ -1217,8 +1255,8 @@ public class Scene {
             }
         } else {
             EntityItem entity =
-                    new EntityItem(
-                            this, null, itemData, bornForm.getPosition().clone().addZ(.9f), amount); // Why Z?
+                new EntityItem(
+                    this, null, itemData, bornForm.getPosition().clone().addZ(.9f), amount); // Why Z?
             addEntity(entity);
         }
     }
@@ -1235,23 +1273,23 @@ public class Scene {
         }
 
         var npcList =
-                SceneIndexManager.queryNeighbors(
-                        data.getIndex(),
-                        pos.toDoubleArray(),
-                        Grasscutter.getConfig().server.game.loadEntitiesForPlayerRange);
+            SceneIndexManager.queryNeighbors(
+                data.getIndex(),
+                pos.toDoubleArray(),
+                Grasscutter.getConfig().server.game.loadEntitiesForPlayerRange);
 
         var sceneNpcBornCanidates =
-                npcList.stream().filter(i -> !this.npcBornEntrySet.contains(i)).toList();
+            npcList.stream().filter(i -> !this.npcBornEntrySet.contains(i)).toList();
 
         List<SceneNpcBornEntry> sceneNpcBornEntries = new ArrayList<>();
         sceneNpcBornCanidates.forEach(
-                i -> {
-                    var groupInstance = scriptManager.getGroupInstanceById(i.getGroupId());
-                    if (groupInstance == null) return;
-                    if (i.getSuiteIdList() != null
-                            && !i.getSuiteIdList().contains(groupInstance.getActiveSuiteId())) return;
-                    sceneNpcBornEntries.add(i);
-                });
+            i -> {
+                var groupInstance = scriptManager.getGroupInstanceById(i.getGroupId());
+                if (groupInstance == null) return;
+                if (i.getSuiteIdList() != null
+                    && !i.getSuiteIdList().contains(groupInstance.getActiveSuiteId())) return;
+                sceneNpcBornEntries.add(i);
+            });
 
         if (sceneNpcBornEntries.size() > 0) {
             this.broadcastPacket(new PacketGroupSuiteNotify(sceneNpcBornEntries));
@@ -1259,8 +1297,8 @@ public class Scene {
         }
 
         return npcList.stream()
-                .filter(i -> this.npcBornEntrySet.contains(i) || sceneNpcBornEntries.contains(i))
-                .toList();
+            .filter(i -> this.npcBornEntrySet.contains(i) || sceneNpcBornEntries.contains(i))
+            .toList();
     }
 
     public void loadGroupForQuest(List<QuestGroupSuite> sceneGroupSuite) {
@@ -1269,18 +1307,18 @@ public class Scene {
         }
 
         sceneGroupSuite.forEach(
-                i -> {
-                    var group = scriptManager.getGroupById(i.getGroup());
-                    if (group == null) return;
+            i -> {
+                var group = scriptManager.getGroupById(i.getGroup());
+                if (group == null) return;
 
-                    var groupInstance = scriptManager.getGroupInstanceById(i.getGroup());
-                    var suite = group.getSuiteByIndex(i.getSuite());
-                    if (suite == null || groupInstance == null) {
-                        return;
-                    }
+                var groupInstance = scriptManager.getGroupInstanceById(i.getGroup());
+                var suite = group.getSuiteByIndex(i.getSuite());
+                if (suite == null || groupInstance == null) {
+                    return;
+                }
 
-                    scriptManager.refreshGroup(groupInstance, i.getSuite(), false);
-                });
+                scriptManager.refreshGroup(groupInstance, i.getSuite(), false);
+            });
     }
 
     /**

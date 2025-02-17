@@ -5,19 +5,26 @@ import emu.grasscutter.Grasscutter;
 import emu.grasscutter.plugin.api.ServerHelper;
 import emu.grasscutter.server.game.GameServer;
 import emu.grasscutter.utils.FileUtils;
+
 import java.io.*;
 import java.net.URLClassLoader;
+
 import lombok.EqualsAndHashCode;
 import org.slf4j.*;
 
-/** The base class for all plugins to extend. */
+/**
+ * The base class for all plugins to extend.
+ */
 @EqualsAndHashCode
 public abstract class Plugin {
     private final ServerHelper server = ServerHelper.getInstance();
-
+    //插件身份信息
     private PluginIdentifier identifier;
+    //根据插件url创建的类加载器 不是真的用来加载插件的类加载器
     private URLClassLoader classLoader;
+    //文件
     private File dataFolder;
+    //日志 根据类名获取
     private Logger logger;
 
     /**
@@ -45,7 +52,7 @@ public abstract class Plugin {
 
         if (!this.dataFolder.exists() && !this.dataFolder.mkdirs()) {
             Grasscutter.getLogger()
-                    .warn("Failed to create plugin data folder for " + this.identifier.name);
+                .warn("Failed to create plugin data folder for " + this.identifier.name);
         }
     }
 
@@ -58,17 +65,23 @@ public abstract class Plugin {
         return this.identifier;
     }
 
-    /** Get the plugin's name. */
+    /**
+     * Get the plugin's name.
+     */
     public final String getName() {
         return this.identifier.name;
     }
 
-    /** Get the plugin's description. */
+    /**
+     * Get the plugin's description.
+     */
     public final String getDescription() {
         return this.identifier.description;
     }
 
-    /** Get the plugin's version. */
+    /**
+     * Get the plugin's version.
+     */
     public final String getVersion() {
         return this.identifier.version;
     }
@@ -120,11 +133,14 @@ public abstract class Plugin {
     }
 
     /* Called when the plugin is first loaded. */
-    public void onLoad() {}
+    public void onLoad() {
+    }
 
     /* Called after (most of) the server enables. */
-    public void onEnable() {}
+    public void onEnable() {
+    }
 
     /* Called before the server disables. */
-    public void onDisable() {}
+    public void onDisable() {
+    }
 }

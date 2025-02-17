@@ -29,6 +29,7 @@ import io.netty.util.concurrent.FastThreadLocalThread;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -38,38 +39,49 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
+
 import lombok.Getter;
 import lombok.val;
 import org.jetbrains.annotations.NotNull;
 
 public class World implements Iterable<Player> {
-    @Getter private final GameServer server;
-    @Getter private Player host;
-    @Getter private final List<Player> players;
-    @Getter private final Int2ObjectMap<Scene> scenes;
+    @Getter
+    private final GameServer server;
+    @Getter
+    private Player host;
+    @Getter
+    private final List<Player> players;
+    @Getter
+    private final Int2ObjectMap<Scene> scenes;
 
-    @Getter private EntityWorld entity;
+    @Getter
+    private EntityWorld entity;
     private int nextEntityId = 0;
     private int nextPeerId = 0;
     private int worldLevel;
 
-    @Getter private boolean isMultiplayer = false;
-    @Getter private boolean timeLocked;
+    @Getter
+    private boolean isMultiplayer = false;
+    @Getter
+    private boolean timeLocked;
 
     private long lastUpdateTime;
-    @Getter protected int tickCount = 0;
-    @Getter private boolean isPaused = false;
-    @Getter private long currentWorldTime;
+    @Getter
+    protected int tickCount = 0;
+    @Getter
+    private boolean isPaused = false;
+    @Getter
+    private long currentWorldTime;
 
     private static final ExecutorService eventExecutor =
-            new ThreadPoolExecutor(
-                    4,
-                    4,
-                    60,
-                    TimeUnit.SECONDS,
-                    new LinkedBlockingDeque<>(1000),
-                    FastThreadLocalThread::new,
-                    new ThreadPoolExecutor.AbortPolicy());
+        new ThreadPoolExecutor(
+            4,
+            4,
+            60,
+            TimeUnit.SECONDS,
+            new LinkedBlockingDeque<>(1000),
+            FastThreadLocalThread::new,
+            new ThreadPoolExecutor.AbortPolicy());
 
     public World(Player player) {
         this(player, false);
@@ -139,7 +151,8 @@ public class World implements Iterable<Player> {
      * @param sceneId The scene ID.
      * @return The scene.
      */
-    @Nullable public Scene getSceneById(int sceneId) {
+    @Nullable
+    public Scene getSceneById(int sceneId) {
         // Get scene normally
         var scene = this.getScenes().get(sceneId);
         if (scene != null) {
@@ -194,21 +207,21 @@ public class World implements Iterable<Player> {
         // Copy main team to multiplayer team
         if (this.isMultiplayer()) {
             player
-                    .getTeamManager()
-                    .getMpTeam()
-                    .copyFrom(
-                            player.getTeamManager().getCurrentSinglePlayerTeamInfo(),
-                            player.getTeamManager().getMaxTeamSize());
+                .getTeamManager()
+                .getMpTeam()
+                .copyFrom(
+                    player.getTeamManager().getCurrentSinglePlayerTeamInfo(),
+                    player.getTeamManager().getMaxTeamSize());
             player.getTeamManager().setCurrentCharacterIndex(0);
 
             if (player != this.getHost()) {
                 this.broadcastPacket(
-                        new PacketPlayerChatNotify(
-                                player,
-                                0,
-                                SystemHint.newBuilder()
-                                        .setType(SystemHintType.SYSTEM_HINT_TYPE_CHAT_ENTER_WORLD.getNumber())
-                                        .build()));
+                    new PacketPlayerChatNotify(
+                        player,
+                        0,
+                        SystemHint.newBuilder()
+                            .setType(SystemHintType.SYSTEM_HINT_TYPE_CHAT_ENTER_WORLD.getNumber())
+                            .build()));
             }
         }
 
@@ -245,21 +258,21 @@ public class World implements Iterable<Player> {
         // Copy main team to multiplayer team
         if (this.isMultiplayer()) {
             player
-                    .getTeamManager()
-                    .getMpTeam()
-                    .copyFrom(
-                            player.getTeamManager().getCurrentSinglePlayerTeamInfo(),
-                            player.getTeamManager().getMaxTeamSize());
+                .getTeamManager()
+                .getMpTeam()
+                .copyFrom(
+                    player.getTeamManager().getCurrentSinglePlayerTeamInfo(),
+                    player.getTeamManager().getMaxTeamSize());
             player.getTeamManager().setCurrentCharacterIndex(0);
 
             if (player != this.getHost()) {
                 this.broadcastPacket(
-                        new PacketPlayerChatNotify(
-                                player,
-                                0,
-                                SystemHint.newBuilder()
-                                        .setType(SystemHintType.SYSTEM_HINT_TYPE_CHAT_ENTER_WORLD.getNumber())
-                                        .build()));
+                    new PacketPlayerChatNotify(
+                        player,
+                        0,
+                        SystemHint.newBuilder()
+                            .setType(SystemHintType.SYSTEM_HINT_TYPE_CHAT_ENTER_WORLD.getNumber())
+                            .build()));
             }
         }
 
@@ -277,15 +290,15 @@ public class World implements Iterable<Player> {
     public synchronized void removePlayer(Player player) {
         // Remove team entities
         player.sendPacket(
-                new PacketDelTeamEntityNotify(
-                        player.getSceneId(),
-                        this.getPlayers().stream()
-                                .map(
-                                        p ->
-                                                p.getTeamManager().getEntity() == null
-                                                        ? 0
-                                                        : p.getTeamManager().getEntity().getId())
-                                .toList()));
+            new PacketDelTeamEntityNotify(
+                player.getSceneId(),
+                this.getPlayers().stream()
+                    .map(
+                        p ->
+                            p.getTeamManager().getEntity() == null
+                                ? 0
+                                : p.getTeamManager().getEntity().getId())
+                    .toList()));
 
         // Deregister
         this.getPlayers().remove(player);
@@ -308,21 +321,21 @@ public class World implements Iterable<Player> {
                 world.addPlayer(victim);
 
                 victim.sendPacket(
-                        new PacketPlayerEnterSceneNotify(
-                                victim,
-                                EnterType.ENTER_TYPE_SELF,
-                                EnterReason.TeamKick,
-                                victim.getSceneId(),
-                                victim.getPosition()));
+                    new PacketPlayerEnterSceneNotify(
+                        victim,
+                        EnterType.ENTER_TYPE_SELF,
+                        EnterReason.TeamKick,
+                        victim.getSceneId(),
+                        victim.getPosition()));
             }
         } else {
             this.broadcastPacket(
-                    new PacketPlayerChatNotify(
-                            player,
-                            0,
-                            SystemHint.newBuilder()
-                                    .setType(SystemHintType.SYSTEM_HINT_TYPE_CHAT_LEAVE_WORLD.getNumber())
-                                    .build()));
+                new PacketPlayerChatNotify(
+                    player,
+                    0,
+                    SystemHint.newBuilder()
+                        .setType(SystemHintType.SYSTEM_HINT_TYPE_CHAT_LEAVE_WORLD.getNumber())
+                        .build()));
         }
     }
 
@@ -341,17 +354,17 @@ public class World implements Iterable<Player> {
 
     public void queueTransferPlayerToScene(Player player, int sceneId, Position pos, int delayMs) {
         player.setQueuedTeleport(
-                eventExecutor.submit(
-                        () -> {
-                            try {
-                                Thread.sleep(delayMs);
-                                transferPlayerToScene(player, sceneId, pos);
-                            } catch (InterruptedException e) {
-                                Grasscutter.getLogger()
-                                        .trace(
-                                                "queueTransferPlayerToScene: teleport to scene {} is interrupted", sceneId);
-                            }
-                        }));
+            eventExecutor.submit(
+                () -> {
+                    try {
+                        Thread.sleep(delayMs);
+                        transferPlayerToScene(player, sceneId, pos);
+                    } catch (InterruptedException e) {
+                        Grasscutter.getLogger()
+                            .trace(
+                                "queueTransferPlayerToScene: teleport to scene {} is interrupted", sceneId);
+                    }
+                }));
     }
 
     public boolean transferPlayerToScene(Player player, int sceneId, Position pos) {
@@ -359,7 +372,7 @@ public class World implements Iterable<Player> {
     }
 
     public boolean transferPlayerToScene(
-            Player player, int sceneId, TeleportType teleportType, Position pos) {
+        Player player, int sceneId, TeleportType teleportType, Position pos) {
         return this.transferPlayerToScene(player, sceneId, teleportType, null, pos);
     }
 
@@ -368,49 +381,49 @@ public class World implements Iterable<Player> {
     }
 
     public boolean transferPlayerToScene(
-            Player player,
-            int sceneId,
-            TeleportType teleportType,
-            DungeonData dungeonData,
-            Position teleportTo) {
+        Player player,
+        int sceneId,
+        TeleportType teleportType,
+        DungeonData dungeonData,
+        Position teleportTo) {
         EnterReason enterReason =
-                switch (teleportType) {
-                        // shouldn't affect the teleportation, but its clearer when inspecting the packets
-                        // TODO add more conditions for different reason.
-                    case INTERNAL -> EnterReason.TransPoint;
-                    case WAYPOINT -> EnterReason.TransPoint;
-                    case MAP -> EnterReason.TransPoint;
-                    case COMMAND -> EnterReason.Gm;
-                    case SCRIPT -> EnterReason.Lua;
-                    case CLIENT -> EnterReason.ClientTransmit;
-                    case DUNGEON -> EnterReason.DungeonEnter;
-                    default -> EnterReason.None;
-                };
+            switch (teleportType) {
+                // shouldn't affect the teleportation, but its clearer when inspecting the packets
+                // TODO add more conditions for different reason.
+                case INTERNAL -> EnterReason.TransPoint;
+                case WAYPOINT -> EnterReason.TransPoint;
+                case MAP -> EnterReason.TransPoint;
+                case COMMAND -> EnterReason.Gm;
+                case SCRIPT -> EnterReason.Lua;
+                case CLIENT -> EnterReason.ClientTransmit;
+                case DUNGEON -> EnterReason.DungeonEnter;
+                default -> EnterReason.None;
+            };
         return transferPlayerToScene(
-                player, sceneId, teleportType, enterReason, dungeonData, teleportTo);
+            player, sceneId, teleportType, enterReason, dungeonData, teleportTo);
     }
 
     public boolean transferPlayerToScene(
-            Player player,
-            int sceneId,
-            TeleportType teleportType,
-            EnterReason enterReason,
-            DungeonData dungeonData,
-            Position teleportTo) {
+        Player player,
+        int sceneId,
+        TeleportType teleportType,
+        EnterReason enterReason,
+        DungeonData dungeonData,
+        Position teleportTo) {
         // Get enter types
         val teleportProps =
-                TeleportProperties.builder()
-                        .sceneId(sceneId)
-                        .teleportType(teleportType)
-                        .enterReason(enterReason)
-                        .teleportTo(teleportTo)
-                        .enterType(EnterType.ENTER_TYPE_JUMP);
+            TeleportProperties.builder()
+                .sceneId(sceneId)
+                .teleportType(teleportType)
+                .enterReason(enterReason)
+                .teleportTo(teleportTo)
+                .enterType(EnterType.ENTER_TYPE_JUMP);
 
         val sceneData = GameData.getSceneDataMap().get(sceneId);
         if (dungeonData != null) {
             teleportProps
-                    .teleportTo(dungeonData.getStartPosition())
-                    .teleportRot(dungeonData.getStartRotation());
+                .teleportTo(dungeonData.getStartPosition())
+                .teleportRot(dungeonData.getStartRotation());
             teleportProps.enterType(EnterType.ENTER_TYPE_DUNGEON).enterReason(EnterReason.DungeonEnter);
             teleportProps.dungeonId(dungeonData.getId());
         } else if (player.getSceneId() == sceneId) {
@@ -440,7 +453,7 @@ public class World implements Iterable<Player> {
 
         // Call player teleport event.
         PlayerTeleportEvent event =
-                new PlayerTeleportEvent(player, teleportProperties, player.getPosition());
+            new PlayerTeleportEvent(player, teleportProperties, player.getPosition());
         // Call event and check if it was canceled.
         event.call();
         if (event.isCanceled()) {
@@ -515,7 +528,7 @@ public class World implements Iterable<Player> {
         player.sendPacket(new PacketPlayerEnterSceneNotify(player, teleportProperties));
 
         if (teleportProperties.getTeleportType() != TeleportType.INTERNAL
-                && teleportProperties.getTeleportType() != SCRIPT) {
+            && teleportProperties.getTeleportType() != SCRIPT) {
             player.getQuestManager().queueEvent(QuestContent.QUEST_CONTENT_ANY_MANUAL_TRANSPORT);
         }
 
@@ -533,10 +546,10 @@ public class World implements Iterable<Player> {
             // to do it
             if (this.isMultiplayer()) {
                 player
-                        .getTeamManager()
-                        .getMpTeam()
-                        .copyFrom(
-                                player.getTeamManager().getMpTeam(), player.getTeamManager().getMaxTeamSize());
+                    .getTeamManager()
+                    .getMpTeam()
+                    .copyFrom(
+                        player.getTeamManager().getMpTeam(), player.getTeamManager().getMaxTeamSize());
                 player.getTeamManager().updateTeamEntities(null);
             }
 
@@ -567,16 +580,16 @@ public class World implements Iterable<Player> {
      * @return True if the world should be removed.
      */
     public boolean onTick() {
-        // Check if there are players in this world.
+        // Check if there are players in this world. 没有玩家 删除
         if (this.getPlayerCount() == 0) return true;
-        // Tick all associated scenes.
+        // Tick all associated scenes. tick所有场景
         this.getScenes()
-                .forEach(
-                        (k, scene) -> {
-                            if (scene.getPlayerCount() > 0) scene.onTick();
-                        });
+            .forEach(
+                (k, scene) -> {
+                    if (scene.getPlayerCount() > 0) scene.onTick();
+                });
 
-        // sync time every 10 seconds
+        // sync time every 10 seconds 十秒同步一次时间
         if (this.tickCount % 10 == 0) {
             this.getPlayers().forEach(p -> p.sendPacket(new PacketPlayerGameTimeNotify(p)));
         }
@@ -590,9 +603,12 @@ public class World implements Iterable<Player> {
         return false;
     }
 
-    public void close() {}
+    public void close() {
+    }
 
-    /** Returns the in-game world time in real milliseconds. */
+    /**
+     * Returns the in-game world time in real milliseconds.
+     */
     public long getWorldTime() {
         if (!this.isPaused && !this.timeLocked) {
             var newUpdateTime = System.currentTimeMillis();
@@ -603,17 +619,23 @@ public class World implements Iterable<Player> {
         return this.currentWorldTime;
     }
 
-    /** Returns the current in game days world time in in-game minutes (0-1439) */
+    /**
+     * Returns the current in game days world time in in-game minutes (0-1439)
+     */
     public int getGameTime() {
         return (int) (getTotalGameTimeMinutes() % 1440);
     }
 
-    /** Returns the current in game days world time in ingame hours (0-23) */
+    /**
+     * Returns the current in game days world time in ingame hours (0-23)
+     */
     public int getGameTimeHours() {
         return this.getGameTime() / 60;
     }
 
-    /** Returns the total number of in game days that got completed since the beginning of the game */
+    /**
+     * Returns the total number of in game days that got completed since the beginning of the game
+     */
     public long getTotalGameTimeDays() {
         return ConversionUtils.gameTimeToDays(getTotalGameTimeMinutes());
     }
@@ -625,7 +647,9 @@ public class World implements Iterable<Player> {
         return ConversionUtils.gameTimeToHours(getTotalGameTimeMinutes());
     }
 
-    /** Returns the elapsed in-game minutes since the creation of the world. */
+    /**
+     * Returns the elapsed in-game minutes since the creation of the world.
+     */
     public long getTotalGameTimeMinutes() {
         return this.getWorldTime() / 1000;
     }
@@ -683,10 +707,12 @@ public class World implements Iterable<Player> {
         // Update all players.
         this.host.updatePlayerGameTime(currentWorldTime);
         this.players.forEach(
-                player -> player.getQuestManager().queueEvent(QuestContent.QUEST_CONTENT_GAME_TIME_TICK));
+            player -> player.getQuestManager().queueEvent(QuestContent.QUEST_CONTENT_GAME_TIME_TICK));
     }
 
-    /** Notifies all players of the current world time. */
+    /**
+     * Notifies all players of the current world time.
+     */
     public void updateTime() {
         this.getPlayers().forEach(p -> p.sendPacket(new PacketPlayerGameTimeNotify(p)));
         this.getPlayers().forEach(p -> p.sendPacket(new PacketSceneTimeNotify(p)));
@@ -703,10 +729,11 @@ public class World implements Iterable<Player> {
         // Notify players of the locking.
         this.updateTime();
         this.getPlayers()
-                .forEach(player -> player.setProperty(PlayerProperty.PROP_IS_GAME_TIME_LOCKED, locked));
+            .forEach(player -> player.setProperty(PlayerProperty.PROP_IS_GAME_TIME_LOCKED, locked));
     }
 
-    @NotNull @Override
+    @NotNull
+    @Override
     public Iterator<Player> iterator() {
         return this.getPlayers().iterator();
     }

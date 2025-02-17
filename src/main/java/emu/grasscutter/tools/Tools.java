@@ -399,7 +399,7 @@ public final class Tools {
 
         stagedMessage.append("\nYour choice: [EN] ");
 
-        input = Grasscutter.getConsole().readLine(stagedMessage.toString());
+        input = Grasscutter.    getConsole().readLine(stagedMessage.toString());
         if (availableLangList.contains(input.toLowerCase())) {
             return input.toUpperCase();
         }

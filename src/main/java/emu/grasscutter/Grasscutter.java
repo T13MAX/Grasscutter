@@ -98,9 +98,9 @@ public final class Grasscutter {
         }
 
         // Get the server run mode.
-        var runMode = Grasscutter.getRunMode();
+        ServerRunMode runMode = Grasscutter.getRunMode();
 
-        // Create command map.
+        // Create command map. 命令处理器
         commandMap = new CommandMap(true);
 
         // Initialize server.

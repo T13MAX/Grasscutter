@@ -34,22 +34,20 @@ public final class DatabaseManager {
         MongoClient gameMongoClient = MongoClients.create(DATABASE.game.connectionUri);
 
         // Set mapper options.
-        MapperOptions mapperOptions =
-                MapperOptions.builder().storeEmpties(true).storeNulls(false).build();
+        MapperOptions mapperOptions =   MapperOptions.builder().storeEmpties(true).storeNulls(false).build();
 
         // Create data store.
-        gameDatastore =
-                Morphia.createDatastore(gameMongoClient, DATABASE.game.collection, mapperOptions);
+        gameDatastore = Morphia.createDatastore(gameMongoClient, DATABASE.game.collection, mapperOptions);
 
         // Map classes.
         var entities =
-                Grasscutter.reflector.getTypesAnnotatedWith(Entity.class).stream()
-                        .filter(
-                                cls -> {
-                                    Entity e = cls.getAnnotation(Entity.class);
-                                    return e != null && !e.value().equals(Mapper.IGNORED_FIELDNAME);
-                                })
-                        .toArray(Class<?>[]::new);
+            Grasscutter.reflector.getTypesAnnotatedWith(Entity.class).stream()
+                .filter(
+                    cls -> {
+                        Entity e = cls.getAnnotation(Entity.class);
+                        return e != null && !e.value().equals(Mapper.IGNORED_FIELDNAME);
+                    })
+                .toArray(Class<?>[]::new);
 
         gameDatastore.getMapper().map(entities);
 
@@ -60,8 +58,8 @@ public final class DatabaseManager {
             MongoClient dispatchMongoClient = MongoClients.create(DATABASE.server.connectionUri);
 
             dispatchDatastore =
-                    Morphia.createDatastore(dispatchMongoClient, DATABASE.server.collection, mapperOptions);
-            dispatchDatastore.getMapper().map(new Class<?>[] {DatabaseCounter.class, Account.class});
+                Morphia.createDatastore(dispatchMongoClient, DATABASE.server.collection, mapperOptions);
+            dispatchDatastore.getMapper().map(new Class<?>[]{DatabaseCounter.class, Account.class});
 
             // Ensure indexes for dispatch datastore
             ensureIndexes(dispatchDatastore);
@@ -93,10 +91,10 @@ public final class DatabaseManager {
 
     public static synchronized int getNextId(Class<?> c) {
         DatabaseCounter counter =
-                getGameDatastore()
-                        .find(DatabaseCounter.class)
-                        .filter(Filters.eq("_id", c.getSimpleName()))
-                        .first();
+            getGameDatastore()
+                .find(DatabaseCounter.class)
+                .filter(Filters.eq("_id", c.getSimpleName()))
+                .first();
         if (counter == null) {
             counter = new DatabaseCounter(c.getSimpleName());
         }
